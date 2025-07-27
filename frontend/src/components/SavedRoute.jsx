@@ -1,57 +1,80 @@
-// src/components/SavedRoute.jsx
-import React from "react";
+// src/pages/SavedRoutesPage.jsx
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const dummyRoutes = [
-  {
-    name: "Morning Walk 🏃‍♂️",
-    emoji: "🌅",
-    from: { lat: 28.6139, lng: 77.209 },
-    to: { lat: 28.7041, lng: 77.1025 },
-    timestamp: "2025-07-26T08:00:00Z",
-  },
-  {
-    name: "Evening Ride 🚴‍♀️",
-    emoji: "🌇",
-    from: { lat: 19.076, lng: 72.8777 },
-    to: { lat: 18.5204, lng: 73.8567 },
-    timestamp: "2025-07-25T18:45:00Z",
-  },
-];
+const SavedRoute = () => {
+  const [routes, setRoutes] = useState([]);
+  const navigate = useNavigate();
 
-// inside SavedRoute.jsx
-const SavedRoute = ({ routes = [], onClose, onView, onDelete }) => {
+  useEffect(() => {
+    const stored = localStorage.getItem("savedRoutes");
+    if (stored) {
+      setRoutes(JSON.parse(stored));
+    }
+  }, []);
+
+  const handleDelete = (index) => {
+    const updated = [...routes];
+    updated.splice(index, 1);
+    localStorage.setItem("savedRoutes", JSON.stringify(updated));
+    setRoutes(updated);
+  };
+
+  const handleView = (route) => {
+    alert(`Route from (${route.from.lat}, ${route.from.lng}) to (${route.to.lat}, ${route.to.lng})`);
+    // Optional: pass route data back to map with state or params
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-[1100]">
-      <div className="bg-white p-6 rounded-lg w-[90%] max-w-md space-y-4">
-        <h2 className="text-xl font-bold">Saved Routes</h2>
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-3xl mx-auto bg-white shadow-md rounded-xl p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">🛣️ Saved Routes</h2>
+          <button
+            onClick={() => navigate("/")}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+          >
+            Back to Map
+          </button>
+        </div>
+
         {routes.length === 0 ? (
-          <p>No saved routes yet.</p>
+          <p className="text-gray-600">No saved routes found.</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-4">
             {routes.map((route, index) => (
-              <li
-                key={index}
-                className="flex justify-between items-center p-2 border rounded-md"
-              >
-                <div>
-                  <p className="text-sm text-gray-600">
-                    From: {route.from.lat.toFixed(3)}, {route.from.lng.toFixed(3)}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    To: {route.to.lat.toFixed(3)}, {route.to.lng.toFixed(3)}
-                  </p>
-                  <p className="text-xs text-gray-400">📅 {route.timestamp || route.date}</p>
-                </div>
-                <div className="flex gap-2">
+              <li key={index} className="border p-4 rounded-lg shadow">
+                <p className="font-semibold mb-1">
+                  From: ({route.from.lat.toFixed(2)}, {route.from.lng.toFixed(2)})
+                </p>
+                <p className="font-semibold mb-1">
+                  To: ({route.to.lat.toFixed(2)}, {route.to.lng.toFixed(2)})
+                </p>
+                <p className="text-sm text-gray-500 mb-2">
+                  Memories: {route.memories?.length || 0} | Saved on:{" "}
+                  {new Date(route.timestamp).toLocaleString()}
+                </p>
+
+                {route.memories?.length > 0 && (
+                  <ul className="text-sm text-gray-700 pl-4 list-disc">
+                    {route.memories.map((m, i) => (
+                      <li key={i}>
+                        <strong>{m.title}</strong>: {m.description}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <div className="space-x-2 mt-3">
                   <button
-                    onClick={() => onView(route)}
-                    className="text-blue-600 hover:underline text-sm"
+                    onClick={() => handleView(route)}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded"
                   >
                     View
                   </button>
                   <button
-                    onClick={() => onDelete(index)}
-                    className="text-red-500 hover:underline text-sm"
+                    onClick={() => handleDelete(index)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
                   >
                     Delete
                   </button>
@@ -60,14 +83,9 @@ const SavedRoute = ({ routes = [], onClose, onView, onDelete }) => {
             ))}
           </ul>
         )}
-        <button
-          onClick={onClose}
-          className="mt-4 bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-800"
-        >
-          Close
-        </button>
       </div>
     </div>
   );
 };
+
 export default SavedRoute;

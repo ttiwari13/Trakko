@@ -1,4 +1,6 @@
+// src/pages/MapPage.jsx
 import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
@@ -11,8 +13,9 @@ const MapPage = () => {
   const [memories, setMemories] = useState([]);
   const [selectedLatLng, setSelectedLatLng] = useState(null);
   const [currentLocation, setCurrentLocation] = useState(null);
+  const navigate = useNavigate();
 
-  const destination = [28.6315, 77.2167]; // Dummy destination: Connaught Place
+  const destination = [28.6315, 77.2167]; // Connaught Place
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -67,32 +70,54 @@ const MapPage = () => {
     if (!currentLocation) return;
 
     const routeData = {
-      from: currentLocation,
-      to: destination,
-      memories: memories,
-      createdAt: new Date(),
+      from: {
+        lat: currentLocation[0],
+        lng: currentLocation[1],
+      },
+      to: {
+        lat: destination[0],
+        lng: destination[1],
+      },
+      memories: memories.map((m) => ({
+        title: m.title,
+        description: m.description,
+        latlng: { lat: m.latlng.lat, lng: m.latlng.lng },
+      })),
+      timestamp: new Date().toISOString(),
     };
 
-    console.log('🗺️ Route Saved:', routeData);
-    alert('Route saved successfully (see console for now)');
+    const existingRoutes = JSON.parse(localStorage.getItem('savedRoutes')) || [];
+    const updatedRoutes = [...existingRoutes, routeData];
+    localStorage.setItem('savedRoutes', JSON.stringify(updatedRoutes));
+
+    setMemories([]);
+    alert('✅ Route saved successfully!');
   };
 
   return (
     <div className="w-full h-screen relative">
       <div id="map" className="w-full h-full z-0 rounded-lg" />
+      
       {selectedLatLng && (
-  <MemoryForm
-    latlng={selectedLatLng}
-    onSubmit={(memory) => handleSaveMemory({ ...memory, latlng: selectedLatLng })}
-    onClose={() => setSelectedLatLng(null)}
-  />
-)}
+        <MemoryForm
+          latlng={selectedLatLng}
+          onSubmit={(memory) => handleSaveMemory({ ...memory, latlng: selectedLatLng })}
+          onClose={() => setSelectedLatLng(null)}
+        />
+      )}
 
       <button
         onClick={handleSaveRoute}
         className="absolute top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow-md z-[1000]"
       >
         Save Route
+      </button>
+
+      <button
+        onClick={() => navigate('/saved-routes')}
+        className="absolute top-16 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-md z-[1000]"
+      >
+        Show Saved Routes
       </button>
     </div>
   );
